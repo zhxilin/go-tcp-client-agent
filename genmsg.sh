@@ -1,0 +1,1 @@
+protoc --go_out=./core/proto ./core/proto/msg.proto

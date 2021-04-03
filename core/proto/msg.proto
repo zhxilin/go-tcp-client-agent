@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option go_package = "./";
+
+package msg;
+
+message MsgBase
+{
+    bytes payload = 1;
+}
