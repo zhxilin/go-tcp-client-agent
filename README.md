@@ -1,26 +1,93 @@
 # go-tcp-client-agent
 ## Features
-- 一个通用的TCP客户端分层框架
-- 统一ILogger和IParser接口,支持自定义logger和parser中间件,支持多种消息协议
-- 通过依赖注入的形式提供事件队列,解耦业务层和网络层.
-- 使用channel分离消息收发通道
-- 连接状态一致性
+- An universal multi-layer tcp client framework.
+- Universal interface `ILogger` and `IParser`, support custom middleware for logger and parser.
+- Support kinds of message protocol, such as proto, thrift, json, xml etc.
+- Provide event queue injection, decouple business logic and network layer.
+- Seperate send and receive using channel.
+- Sync connection state in multiple goroutine.
 
-## How to
-本实例结合proto协议说明使用步骤
+## Requirements
+- Golang v1.11+ Tested (go mod suppored)
+- Protoc & Protoc-gen-go
+```shell
+$ go get -u github.com/golang/protobuf/{proto,protoc-gen-go}
+```
 
-1. 生成proto协议
+## Quick start
+The example instance using proto, follow the steps to run:
+
+1. Download dependecies
+```shell
+$ go mod download
+```
+
+2. Generate proto message
 ```shell
 $ ./genmsg.sh
 ```
-将core/proto目录下的pb协议转成.pb.go
+It will auto convert `.pb` files under core/proto to `.pb.go`
 
-2. 生成并运行
+3. Build and run
 ```shell
 $ make build
 $ ./build/go-tcp-client-agent
 ```
-或者直接运行
+
+Or run directly
+
 ```shell
 $ make run
+```
+
+## How to use
+
+- Main code usage
+
+```golang
+//define config info to connect to remote server.
+cfg := &model.Config{
+    Id:   0,
+    Host: "127.0.0.1",
+    Port: 1922,
+}
+
+//create a tcp client then begin to run.
+if agent := core.NewTcpClient(cfg); agent != nil {
+    agent.Run()
+    defer agent.Shutdown()
+}
+```
+
+- Receive message from server
+In the `core/agent.go`, focus on the `initHandlers` function. 
+Add your own message handler for different message id there.
+
+```golang
+func (cli *GtaTcpClient) initHandlers() {
+	cli.handlers = make(map[uint16]gtaMsgHandler)
+
+	// Add your own msg handler here.
+    //e.g.
+    addHandler(100, MyFirstHandler)
+}
+
+func MyFirstHandler(msgID uint16, data []byte, len int) error {
+    //Deserialize data in your own protocol.
+    ack := &msg.MyFirstAck{}
+    proto.Unmarshal(data, ack)
+    //...
+}
+```
+
+- Send message to server
+In the `core/agent.go`, using `GtaTcpClient.conn.Send()` function to send message.
+
+```golang
+func (cli *GtaTcpClient) register() error {
+	//Call cli.conn.Send() to send your own message to server.
+	req := &msg.MyFirstReq{}
+	err := cli.conn.Send(100, req)
+	return err
+}
 ```
