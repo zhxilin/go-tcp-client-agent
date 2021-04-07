@@ -4,10 +4,13 @@ import (
 	"go-tcp-client-agent/core/intf"
 	"go-tcp-client-agent/core/middleware"
 	"go-tcp-client-agent/core/model"
+	"go-tcp-client-agent/core/proto/msg"
 	"go-tcp-client-agent/core/service"
 	"net"
 	"strconv"
 	"time"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type gtaMsgHandler func(uint16, []byte, int) error
@@ -124,6 +127,7 @@ func (cli *GtaTcpClient) initHandlers() {
 	cli.handlers = make(map[uint16]gtaMsgHandler)
 
 	// Add your own msg handler here.
+	cli.addHandler(101, cli.onHandleMyFirstAck)
 }
 
 func (cli *GtaTcpClient) addHandler(msgID uint16, handler gtaMsgHandler) {
@@ -133,5 +137,19 @@ func (cli *GtaTcpClient) addHandler(msgID uint16, handler gtaMsgHandler) {
 func (cli *GtaTcpClient) register() error {
 	//Call cli.conn.Send() to send your own message to server.
 
+	req := &msg.MyFirstReq{
+		Hello: []byte("hello"),
+	}
+
+	err := cli.conn.Send(100, req)
+	return err
+}
+
+func (cli *GtaTcpClient) onHandleMyFirstAck(msgID uint16, payload []byte, len int) error {
+
+	ack := &msg.MyFirstAck{}
+	proto.Unmarshal(payload, ack)
+
+	cli.logger.LogInfo(string(ack.Word))
 	return nil
 }

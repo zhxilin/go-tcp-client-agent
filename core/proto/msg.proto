@@ -1,10 +1,20 @@
 syntax = "proto3";
 
-option go_package = "./";
+option go_package = "./msg";
 
 package msg;
 
 message MsgBase
 {
     bytes payload = 1;
+}
+
+message MyFirstReq
+{
+    bytes hello = 1;
+}
+
+message MyFirstAck
+{
+    bytes word = 1;
 }

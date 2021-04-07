@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	msg "go-tcp-client-agent/core/proto"
+	"go-tcp-client-agent/core/proto/msg"
 	"time"
 
 	"google.golang.org/protobuf/proto"
