@@ -26,7 +26,7 @@ $ go mod download
 ```shell
 $ ./genmsg.sh
 ```
-It will auto convert `.pb` files under core/proto to `.pb.go`
+It will auto convert `.pb` files under core/proto/msg to `.pb.go`
 
 3. Build and run
 ```shell
@@ -69,15 +69,17 @@ func (cli *GtaTcpClient) initHandlers() {
 
 	// Add your own msg handler here.
     //e.g.
-    addHandler(100, MyFirstHandler)
+	cli.addHandler(101, cli.onHandleMyFirstAck)
 }
 
-func MyFirstHandler(msgID uint16, data []byte, len int) error {
+func (cli *GtaTcpClient) onHandleMyFirstAck(msgID uint16, payload []byte, len int) error {
     //Deserialize data in your own protocol.
-    ack := &msg.MyFirstAck{}
-    proto.Unmarshal(data, ack)
+	ack := &msg.MyFirstAck{}
+	proto.Unmarshal(payload, ack)
     //...
+	return nil
 }
+
 ```
 
 - Send message to server
@@ -86,7 +88,9 @@ In the `core/agent.go`, using `GtaTcpClient.conn.Send()` function to send messag
 ```golang
 func (cli *GtaTcpClient) register() error {
 	//Call cli.conn.Send() to send your own message to server.
-	req := &msg.MyFirstReq{}
+    req := &msg.MyFirstReq{
+		Hello: []byte("hello"),
+	}
 	err := cli.conn.Send(100, req)
 	return err
 }
